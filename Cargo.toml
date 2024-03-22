@@ -2,10 +2,19 @@
 name = "space_command"
 version = "0.1.0"
 edition = "2021"
+authors = ["Chris Johnson"]
+publish = false
+
+description = "A Simple game where you shoot down incoming meteors"
+license = "MIT"
+homepage = "https://github.com/gordug/space_command"
+repository = "https://github.com/gordug/space_command/space_command.git"
+readme = "README.md"
+keywords = ["game", "space", "shooter", "asteroids"]
+
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-lerp = "0.5.0"
 macroquad = "0.4.5"
 rand = "0.8.5"

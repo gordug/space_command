@@ -84,7 +84,7 @@ struct Game {
     font: Font,
     fullscreen: bool,
     window_size: Vec2,
-    
+
 }
 
 impl Game {
@@ -96,7 +96,7 @@ impl Game {
             window_size: vec2(screen_width(), screen_height()),
         }
     }
-    
+
     fn toggle_fullscreen(&mut self) {
         if !self.fullscreen {
             self.window_size = vec2(screen_width(), screen_height());
@@ -104,7 +104,7 @@ impl Game {
         self.fullscreen = !self.fullscreen;
         set_fullscreen(self.fullscreen);
         if !self.fullscreen {
-            
+
         }
     }
 }
@@ -171,31 +171,6 @@ impl Default for Difficulty {
     }
 }
 
-#[cfg(debug_assertions)]
-fn draw_grid () {
-    for i in (0..screen_width() as i32).step_by(10) {
-        if i % 20 == 0 {
-            draw_line(i as f32, 0., i as f32, screen_height(), 1., WHITE);
-        }
-        else{
-            draw_line(i as f32, 0., i as f32, screen_height(), 1., GRAY);
-        }
-    }
-    for i in (0..screen_height() as i32).step_by(10) {
-        if i % 20 == 0 {
-            draw_line(0., i as f32, screen_width(), i as f32, 1., WHITE);
-        }
-        else {
-            draw_line(0., i as f32, screen_width(), i as f32, 1., GRAY);
-        }
-    }
-    draw_line(screen_width() / 2., 0., screen_width() / 2., screen_height(), 2., RED);
-    draw_line(0., screen_height() / 2., screen_width(), screen_height() / 2., 2., RED);
-}
-
-#[cfg(not(debug_assertions))]
-fn draw_grid() {}
-
 #[macroquad::main("Space Command")]
 async fn main() {
     let mut game = Game::new("assets/fonts/Geoplace-Bold.ttf").await;
@@ -239,7 +214,7 @@ async fn main() {
                 draw_text_ex("Space Command", screen_width() / 2. - 128., screen_height() / 2. - 50., main_text_params.clone());
                 draw_text_ex("Press Space to Start", screen_width() / 2. - 158., screen_height(), main_text_params.clone());
                 draw_text_ex("Press Ctrl + R to Reset", screen_width() / 2. - 128., screen_height() - 50., sub_text_params.clone());
-                
+
                 if is_key_pressed(KeyCode::Space) {
                     break;
                 }
@@ -328,3 +303,29 @@ async fn main() {
         next_frame().await
     }
 }
+
+
+#[cfg(debug_assertions)]
+fn draw_grid () {
+    for i in (0..screen_width() as i32).step_by(10) {
+        if i % 20 == 0 {
+            draw_line(i as f32, 0., i as f32, screen_height(), 1., WHITE);
+        }
+        else{
+            draw_line(i as f32, 0., i as f32, screen_height(), 1., GRAY);
+        }
+    }
+    for i in (0..screen_height() as i32).step_by(10) {
+        if i % 20 == 0 {
+            draw_line(0., i as f32, screen_width(), i as f32, 1., WHITE);
+        }
+        else {
+            draw_line(0., i as f32, screen_width(), i as f32, 1., GRAY);
+        }
+    }
+    draw_line(screen_width() / 2., 0., screen_width() / 2., screen_height(), 2., RED);
+    draw_line(0., screen_height() / 2., screen_width(), screen_height() / 2., 2., RED);
+}
+
+#[cfg(not(debug_assertions))]
+fn draw_grid() {}
