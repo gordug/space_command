@@ -84,16 +84,19 @@ struct Game {
     font: Font,
     fullscreen: bool,
     window_size: Vec2,
-
+    difficulty: Difficulty,
+    grid: bool,
 }
 
 impl Game {
-    async fn new(font_path: &str) -> Self {
+    async fn new(font_bytes: &[u8]) -> Self {
         Game {
             started: false,
-            font: load_ttf_font(font_path).await.expect("Could not load font"),
+            font: load_ttf_font_from_bytes(font_bytes).expect("Failed to load font"),
             fullscreen: false,
             window_size: vec2(screen_width(), screen_height()),
+            difficulty: Difficulty::default(),
+            grid: false,
         }
     }
 
@@ -107,8 +110,100 @@ impl Game {
 
         }
     }
+    
+    async fn draw_menu(&mut self){
+        let font = &self.font.clone();
+        let main_text_params = TextParams {
+            font_size: 20,
+            font_scale: 1.0,
+            font_scale_aspect: 1.0,
+            font: Some(font),
+            color: WHITE,
+            rotation: 0.,
+        };
+        let sub_text_params = TextParams {
+            font_size: 15,
+            font_scale: 1.0,
+            font_scale_aspect: 1.0,
+            font: Some(font),
+            color: GRAY,
+            rotation: 0.,
+        };
+        loop {
+            self.process_input().await;
+            if self.grid {
+                self.draw_grid().await;
+            }
+            else {
+                clear_background(BLACK);
+            }
+            draw_text_ex("Space Command", screen_width() / 2. - 128., screen_height() / 2. - 50., main_text_params.clone());
+            draw_text_ex("Press Space to Start", screen_width() / 2. - 158., screen_height(), main_text_params.clone());
+            draw_text_ex("Press Ctrl + R to Reset", screen_width() / 2. - 128., screen_height() - 50., sub_text_params.clone());
+
+            if is_key_pressed(KeyCode::Space) {
+                break;
+            }
+            if is_key_pressed(KeyCode::R) && is_key_down(KeyCode::LeftControl) {
+                self.difficulty.reset();
+            }
+            if is_key_pressed(KeyCode::I) && is_key_down(KeyCode::LeftControl) {
+                self.difficulty.increase_difficulty();
+            }
+            if is_key_pressed(KeyCode::F11) {
+                self.toggle_fullscreen();
+            }
+
+            next_frame().await;
+        }
+        self.started = true;        
+    }
+    
+    async fn process_input(&mut self) {
+        if is_key_pressed(KeyCode::F11) {
+            self.toggle_fullscreen();
+        }
+        if is_key_pressed(KeyCode::Escape) && self.fullscreen {
+            self.toggle_fullscreen();
+        }
+
+        // ctrl + R to reset the game
+        if is_key_down(KeyCode::LeftControl) && is_key_pressed(KeyCode::R) {
+            self.difficulty.reset();
+        }
+        
+        if is_key_pressed(KeyCode::F12) {
+            self.grid = !self.grid;
+        }
+    }
+    
+    #[cfg(debug_assertions)]
+    async fn draw_grid(&mut self){
+        for i in (0..screen_width() as i32).step_by(10) {
+            if i % 20 == 0 {
+                draw_line(i as f32, 0., i as f32, screen_height(), 1., WHITE);
+            }
+            else{
+                draw_line(i as f32, 0., i as f32, screen_height(), 1., GRAY);
+            }
+        }
+        for i in (0..screen_height() as i32).step_by(10) {
+            if i % 20 == 0 {
+                draw_line(0., i as f32, screen_width(), i as f32, 1., WHITE);
+            }
+            else {
+                draw_line(0., i as f32, screen_width(), i as f32, 1., GRAY);
+            }
+        }
+        draw_line(screen_width() / 2., 0., screen_width() / 2., screen_height(), 2., RED);
+        draw_line(0., screen_height() / 2., screen_width(), screen_height() / 2., 2., RED);
+    
+    }
+    #[cfg(not(debug_assertions))]
+    async fn draw_grid(&mut self){}
 }
 
+#[derive(Clone, Debug)]
 struct Difficulty {
     missile_spawn_rate: f32,
     missile_speed: f32,
@@ -173,7 +268,8 @@ impl Default for Difficulty {
 
 #[macroquad::main("Space Command")]
 async fn main() {
-    let mut game = Game::new("assets/fonts/Geoplace-Bold.ttf").await;
+    let font = include_bytes!("../assets/fonts/Geoplace-Bold.ttf");
+    let mut game = Game::new(font).await;
     let mut bullets: Vec<Bullet> = Vec::new();
     let mut time_since_spawn = 0.;
     let mut difficulty = Difficulty::new();
@@ -206,7 +302,7 @@ async fn main() {
                     debug_grid = !debug_grid;
                 }
                 if debug_grid {
-                    draw_grid();
+                    game.draw_grid().await;
                 }
                 else {
                     clear_background(BLACK);
@@ -303,29 +399,3 @@ async fn main() {
         next_frame().await
     }
 }
-
-
-#[cfg(debug_assertions)]
-fn draw_grid () {
-    for i in (0..screen_width() as i32).step_by(10) {
-        if i % 20 == 0 {
-            draw_line(i as f32, 0., i as f32, screen_height(), 1., WHITE);
-        }
-        else{
-            draw_line(i as f32, 0., i as f32, screen_height(), 1., GRAY);
-        }
-    }
-    for i in (0..screen_height() as i32).step_by(10) {
-        if i % 20 == 0 {
-            draw_line(0., i as f32, screen_width(), i as f32, 1., WHITE);
-        }
-        else {
-            draw_line(0., i as f32, screen_width(), i as f32, 1., GRAY);
-        }
-    }
-    draw_line(screen_width() / 2., 0., screen_width() / 2., screen_height(), 2., RED);
-    draw_line(0., screen_height() / 2., screen_width(), screen_height() / 2., 2., RED);
-}
-
-#[cfg(not(debug_assertions))]
-fn draw_grid() {}
